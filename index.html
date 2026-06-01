@@ -185,8 +185,22 @@ const TEAM_USER_IDS = new Set([
 ]);
 const CALL_GOAL = 50, EMAIL_GOAL = 20, TEAM_GOAL = 70, ICP_VISITORS = 10000, ICP_PRODUCTS = 100;
 const DEMO_TYPE_IDS = {'actitype_1BurUHmpiiB6TLdhBc0bPO':'Demo Booked','actitype_6Rqakvf9srRBlNhakj1ROi':'Live Demo Booked'};
-const VISITORS_FIELD = {'actitype_1BurUHmpiiB6TLdhBc0bPO':'cf_iwLT7Ojofhvb5eBMIpVsyFjt3IIWUwQzoROmhfbYnh4','actitype_6Rqakvf9srRBlNhakj1ROi':'cf_df8CSXww7ryvUUU3Hst6BPoJvoF9q52gdXJIUgxVPQl'};
-const PRODUCTS_FIELD = {'actitype_1BurUHmpiiB6TLdhBc0bPO':'cf_4gf8INbPdDrO5TDmYCL5WIqczmCMiEJeCUih3BjzwWt','actitype_6Rqakvf9srRBlNhakj1ROi':'cf_IXh411NLxeVBFM9N3mlJIjKuFMJJfwDNKZNerkzP7Wx'};
+// Check all known visitor and product field IDs across both activity types
+const ALL_VISITOR_FIELDS = [
+  'cf_iwLT7Ojofhvb5eBMIpVsyFjt3IIWUwQzoROmhfbYnh4',
+  'cf_df8CSXww7ryvUUU3Hst6BPoJvoF9q52gdXJIUgxVPQl',
+];
+const ALL_PRODUCT_FIELDS = [
+  'cf_4gf8INbPdDrO5TDmYCL5WIqczmCMiEJeCUih3BjzwWt',
+  'cf_IXh411NLxeVBFM9N3mlJIjKuFMJJfwDNKZNerkzP7Wx',
+];
+function getFieldValue(b, fields) {
+  for (const f of fields) {
+    const v = b['custom.' + f] ?? b[f];
+    if (v != null && v !== '') return parseInt(v, 10);
+  }
+  return 0;
+}
 
 function getCompetitionStart() {
   const now = new Date(), day = now.getDay();
@@ -320,8 +334,8 @@ async function loadData() {
     if (!DEMO_TYPE_IDS[tid]) continue;
     if (!TEAM_USER_IDS.has(b.user_id) && !TEAM_USER_IDS.has(b.created_by)) continue;
     const name = b.created_by_name || b.user_name || 'Unknown';
-    const visitors = parseInt(b['custom.' + VISITORS_FIELD[tid]] || b[VISITORS_FIELD[tid]] || 0, 10);
-    const products = parseInt(b['custom.' + PRODUCTS_FIELD[tid]] || b[PRODUCTS_FIELD[tid]] || 0, 10);
+    const visitors = getFieldValue(b, ALL_VISITOR_FIELDS);
+    const products = getFieldValue(b, ALL_PRODUCT_FIELDS);
     const icp = visitors >= ICP_VISITORS && products >= ICP_PRODUCTS;
     if (!bookingsByUser[name]) bookingsByUser[name] = {icpCount:0, nonIcp:0};
     if (icp) bookingsByUser[name].icpCount++;
