@@ -248,13 +248,19 @@ async function fetchAllBookings(si, ei) {
 let _userMapCache = null;
 async function getUserMap() {
   if (_userMapCache) return _userMapCache;
-  const r = await proxyGet('/user/?_limit=100');
   _userMapCache = {};
-  for (const u of r.data || []) {
-    if (!TEAM_USER_IDS.has(u.id)) continue;
-    const name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.display_name || 'Unknown';
-    _userMapCache[u.id] = name;
-  }
+  // Fetch all users with pagination
+  let cursor = null;
+  do {
+    const qs = cursor ? `?_limit=100&_cursor=${cursor}` : '?_limit=100';
+    const r = await proxyGet('/user/' + qs);
+    for (const u of r.data || []) {
+      if (!TEAM_USER_IDS.has(u.id)) continue;
+      const name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.display_name || 'Unknown';
+      _userMapCache[u.id] = name;
+    }
+    cursor = r.cursor || null;
+  } while (cursor);
   return _userMapCache;
 }
 
