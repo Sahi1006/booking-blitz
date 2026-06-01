@@ -184,6 +184,13 @@ const TEAM_USER_IDS = new Set([
   'user_OrmdbowYEfWZR5SGDUvRobYkVAXoaO1A5pr1coUBgSu', // Victor Rasch Eenberg
 ]);
 const CALL_GOAL = 50, EMAIL_GOAL = 20, TEAM_GOAL = 70, ICP_VISITORS = 10000, ICP_PRODUCTS = 100;
+
+// Absence overrides — add user IDs and dates to exclude from penalty checks
+// Format: 'user_id': ['2026-06-01', '2026-06-02']
+const ABSENCE_OVERRIDES = {
+  'user_4G0fVtRVsV5S2g6kqvi3eSyUYRcOim4aRWJSDXGcoN7': ['2026-06-01'], // Loa Lanner
+  'user_JZmDWgcq0BjpJnNmpSrptuDmIVHXVTgUS2s32qdfiqJ': ['2026-06-01'], // Alexander Pedersen
+};
 const DEMO_TYPE_IDS = {'actitype_1BurUHmpiiB6TLdhBc0bPO':'Demo Booked','actitype_6Rqakvf9srRBlNhakj1ROi':'Live Demo Booked'};
 // Check all known visitor and product field IDs across both activity types
 const ALL_VISITOR_FIELDS = [
@@ -349,6 +356,9 @@ async function loadData() {
     for (const d of days) {
       const dc = (calls.byDay[name] || {})[d.date] || 0;
       const de = (emails.byDay[name] || {})[d.date] || 0;
+      const userId = Object.keys(_userMapCache || {}).find(id => _userMapCache[id] === name);
+      const isAbsent = userId && ABSENCE_OVERRIDES[userId]?.includes(d.date);
+      if (isAbsent) continue; // skip penalty for approved absence
       const wasWorking = dc >= 3 || de >= 3;
       if (wasWorking && (dc < CALL_GOAL || de < EMAIL_GOAL)) penalties++;
     }
