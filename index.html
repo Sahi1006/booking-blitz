@@ -392,11 +392,10 @@ async function loadData() {
     .map(([uid]) => USER_MAP[uid])
     .filter(Boolean));
 
-  leaderboard.sort((a,b) => b.netScore - a.netScore || b.activityScore - a.activityScore);
-  const grinder = [...leaderboard]
-    .filter(r => !absentNames.has(r.name))
-    .sort((a,b) => b.activityScore - a.activityScore);
-  return {leaderboard, grinder, days: getWeekDays()};
+  const filteredLb = leaderboard.filter(r => !absentNames.has(r.name));
+  filteredLb.sort((a,b) => b.netScore - a.netScore || b.activityScore - a.activityScore);
+  const grinder = [...filteredLb].sort((a,b) => b.activityScore - a.activityScore);
+  return {leaderboard: filteredLb, grinder, days: getWeekDays()};
 }
 
 async function loadGrinderOnly() {
