@@ -279,7 +279,8 @@ async function fetchActivity(type, si, ei) {
         datetime_range: { start: dateStr, end: nextDay.toISOString().slice(0,10) }
       });
       for (const row of resp.data || []) {
-        const name = userMap[row.user_id] || 'Unknown';
+        if (!TEAM_USER_IDS.has(row.user_id)) continue;
+      const name = userMap[row.user_id] || 'Unknown';
         if (name === 'Unknown') continue;
         const val = row[metric] || 0;
         if (val === 0) continue;
@@ -310,6 +311,7 @@ async function loadData() {
   for (const b of bookings) {
     const tid = b.custom_activity_type_id;
     if (!DEMO_TYPE_IDS[tid]) continue;
+    if (!TEAM_USER_IDS.has(b.created_by || b.user_id)) continue;
     const name = b.created_by_name || b.user_name || 'Unknown';
     const visitors = parseInt(b['custom.' + VISITORS_FIELD[tid]] || b[VISITORS_FIELD[tid]] || 0, 10);
     const products = parseInt(b['custom.' + PRODUCTS_FIELD[tid]] || b[PRODUCTS_FIELD[tid]] || 0, 10);
