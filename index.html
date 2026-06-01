@@ -198,12 +198,12 @@ async function proxyPost(path, body) {
 }
 
 async function fetchAllBookings(si, ei) {
-  const bookings = [], typeIds = Object.keys(DEMO_TYPE_IDS);
+  const bookings = [];
   let cursor = null;
   do {
-    // Build query string manually to avoid encoding colons in ISO dates
+    // Note: Close API doesn't allow filtering by custom_activity_type_id without lead_id
+    // So we fetch all custom activities in the date range and filter client-side
     let qs = `_limit=100&date_created__gte=${si}&date_created__lte=${ei}`;
-    typeIds.forEach(id => qs += `&custom_activity_type_id=${id}`);
     if (cursor) qs += `&_cursor=${cursor}`;
     const d = await proxyGet('/activity/custom/?' + qs);
     bookings.push(...(d.data || []));
@@ -263,8 +263,8 @@ async function loadData() {
     const tid = b.custom_activity_type_id;
     if (!DEMO_TYPE_IDS[tid]) continue;
     const name = b.created_by_name || b.user_name || 'Unknown';
-    const visitors = parseInt(b[VISITORS_FIELD[tid]] || 0, 10);
-    const products = parseInt(b[PRODUCTS_FIELD[tid]] || 0, 10);
+    const visitors = parseInt(b['custom.' + VISITORS_FIELD[tid]] || b[VISITORS_FIELD[tid]] || 0, 10);
+    const products = parseInt(b['custom.' + PRODUCTS_FIELD[tid]] || b[PRODUCTS_FIELD[tid]] || 0, 10);
     const icp = visitors >= ICP_VISITORS && products >= ICP_PRODUCTS;
     if (!bookingsByUser[name]) bookingsByUser[name] = {icpCount:0, nonIcp:0};
     if (icp) bookingsByUser[name].icpCount++;
