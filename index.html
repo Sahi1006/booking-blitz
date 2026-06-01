@@ -265,23 +265,41 @@ async function fetchAllBookings(si, ei) {
   return bookings;
 }
 
-// Cache user map to avoid repeated fetches
+// Hardcoded user map for the outreach team (avoids pagination issues with /user/ API)
+const USER_MAP = {
+  'user_7u32htfDyzFi5SgeleqNsBWA1Jl80bw6d3fjOZVUBii': 'Aiden McDonald',
+  'user_JZmDWgcq0BjpJnNmpSrptuDmIVHXVTgUS2s32qdfiqJ': 'Alexander Pedersen',
+  'user_ILTOXEmqlJ0AseozAWL5EIV9QUUG87nzRRJGdZV0WFV': 'Andrea Ciavattone',
+  'user_IJfVQCuVnKabYCluRRhrybfy9sLmtGDKBmMpWeOA7Lk': 'Ansis Janis Auzins',
+  'user_f1aeGa4R7K06rbZ8oMwTE5vpw1uMauhwrOLS5HlijME': 'Charlie Nording',
+  'user_jl5HIqNSjLe1m4sg8iCqvO9EjXVCJ7iJT8a5G3EzjCf': 'Christian Hellberg Yanci',
+  'user_eQyCcltClyWfoeNXYPPnqqFRpYcxMhPVPl1XPiHwtmy': 'Elisa Bracchi',
+  'user_H6UeT8TTomvOkwIMdpXHaiozcxcmof7wtyGDmEzgbfF': 'Ethan Homola',
+  'user_M3jS2hpaKbSQEd97BxtNslJL9xZnuPcHD32HzrlF5IQ': 'Giacomo Sabatini',
+  'user_9Sio4NjpOzJEMKhi6Fyx4idR03jDWagp5lxztGzXvxa': 'Giulia Rubino',
+  'user_np1616CiVrB9b8w06AZJSJs54h6c6LR6nI5maGbODQo': 'Ingrid Solheim',
+  'user_LdCZwEVRkvhC8ME5jXVdWt3DNzleDERHoe5EvyLSpWH': 'Jana Fedotova',
+  'user_TcPtFXZwP0weUDZ2Z4v8rVSmRwJbyqft3T2aKKGzcI3': 'Jan Degen',
+  'user_rRaD6EWSRPbGE7xoP25PcJDAwCEAduTOdsm1Q29bBHR': 'Jimmy Torp',
+  'user_DrAisxcYylsbkv2CXR3zznHWHADfFsAN6oY9MVR3DAV': 'Katarina Krajancova',
+  'user_OqovICdsJ3Zsi5tgoRRJSSozZIzJcf2zuoP9GlRLexp': 'Kristoffer Florencia',
+  'user_PAvRWdO7Tp6GEky8VpNr4A7ODDKACZGTmFvtSaSMCKo': 'Leonor Belo',
+  'user_Swdo2vqt70vQMsS3CmwKfqnmahjMW6v2tUqPcoCdplA': 'Lidya Büyük',
+  'user_4G0fVtRVsV5S2g6kqvi3eSyUYRcOim4aRWJSDXGcoN7': 'Loa Lanner',
+  'user_8TKFUi36xI0du7jnv3FzKFxu2wn7w7GhomkKIyeStA5': 'Monica Bastos',
+  'user_3lYd7jUURC4nQHSqk9zVrYClZwVRJ8FuwNhUi4lDTVN': 'Namo Saeed',
+  'user_UEqGtxHeOvbPoFGkQJixN0mFctDk7N90VGsGpnWzMWh': 'Paulina Doerks',
+  'user_fR6YjYyDrzsc8GHdoxCeDToVup4z1AKsUDt8u56EVER': 'Sasha Stade',
+  'user_fOa94Nj8OcbJfoGKaUkbRvX92Mlof1ucPsA2puMGwtr': 'Stefan Ørngreen',
+  'user_yCeFDjypSPdwPUprKB5T6Qgx9kw1cByUWcyJTb0rvPM': 'Svenja Bendfeldt',
+  'user_c8S2utsTKSrDRBAsEdir4QtfUIjUPGHSxFibvhZTQJy': 'Sylvester Hindersson',
+  'user_gxjRB7KHgEyIx4aMXuaKaPtdUiTY94cFJ2455VvIkLI': 'Twinkle Gismondi',
+  'user_OrmdbowYEfWZR5SGDUvRobYkVAXoaO1A5pr1coUBgSu': 'Victor Rasch Eenberg',
+};
 let _userMapCache = null;
 async function getUserMap() {
   if (_userMapCache) return _userMapCache;
-  _userMapCache = {};
-  // Fetch all users with pagination
-  let cursor = null;
-  do {
-    const qs = cursor ? `?_limit=100&_cursor=${cursor}` : '?_limit=100';
-    const r = await proxyGet('/user/' + qs);
-    for (const u of r.data || []) {
-      if (!TEAM_USER_IDS.has(u.id)) continue;
-      const name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.display_name || 'Unknown';
-      _userMapCache[u.id] = name;
-    }
-    cursor = r.cursor || null;
-  } while (cursor);
+  _userMapCache = {...USER_MAP};
   return _userMapCache;
 }
 
@@ -368,18 +386,33 @@ async function loadData() {
     if (icp + nonIcp + c + e === 0) continue;
     leaderboard.push({name, icpCount:icp, nonIcp, penalties, netScore:icp-penalties, calls:c, emails:e, activityScore:c+e});
   }
+  // Remove absent users from both boards (they shouldn't show at all)
+  const absentNames = new Set(Object.entries(ABSENCE_OVERRIDES)
+    .filter(([uid, dates]) => dates.includes(new Date().toISOString().slice(0,10)))
+    .map(([uid]) => USER_MAP[uid])
+    .filter(Boolean));
+
   leaderboard.sort((a,b) => b.netScore - a.netScore || b.activityScore - a.activityScore);
-  const grinder = [...leaderboard].sort((a,b) => b.activityScore - a.activityScore);
+  const grinder = [...leaderboard]
+    .filter(r => !absentNames.has(r.name))
+    .sort((a,b) => b.activityScore - a.activityScore);
   return {leaderboard, grinder, days: getWeekDays()};
 }
 
 async function loadGrinderOnly() {
   const si = getCompetitionStart().toISOString(), ei = getCompetitionEnd().toISOString();
+  const today = new Date().toISOString().slice(0,10);
   const [calls, emails] = await Promise.all([fetchActivity('call',si,ei), fetchActivity('email',si,ei)]);
+  // Build absent names set
+  const absentNames = new Set(Object.entries(ABSENCE_OVERRIDES)
+    .filter(([uid, dates]) => dates.includes(today))
+    .map(([uid]) => USER_MAP[uid])
+    .filter(Boolean));
   const names = new Set([...Object.keys(calls.byWeek), ...Object.keys(emails.byWeek)]);
   const grinder = [];
   for (const name of names) {
     if (name === 'Unknown') continue;
+    if (absentNames.has(name)) continue;
     const c = calls.byWeek[name] || 0, e = emails.byWeek[name] || 0;
     if (c + e === 0) continue;
     grinder.push({name, calls:c, emails:e, activityScore:c+e});
