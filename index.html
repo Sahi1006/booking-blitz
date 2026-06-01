@@ -151,6 +151,38 @@ nav { padding: 16px 32px; display: flex; align-items: center; justify-content: s
 </div>
 <script>
 const PROXY = 'https://close-proxy-production.up.railway.app';
+
+// Only show outreach team members on the leaderboard
+const TEAM_USER_IDS = new Set([
+  'user_7u32htfDyzFi5SgeleqNsBWA1Jl80bw6d3fjOZVUBii', // Aiden McDonald
+  'user_JZmDWgcq0BjpJnNmpSrptuDmIVHXVTgUS2s32qdfiqJ', // Alexander Pedersen
+  'user_ILTOXEmqlJ0AseozAWL5EIV9QUUG87nzRRJGdZV0WFV', // Andrea Ciavattone
+  'user_IJfVQCuVnKabYCluRRhrybfy9sLmtGDKBmMpWeOA7Lk', // Ansis Janis Auzins
+  'user_f1aeGa4R7K06rbZ8oMwTE5vpw1uMauhwrOLS5HlijME', // Charlie Nording
+  'user_jl5HIqNSjLe1m4sg8iCqvO9EjXVCJ7iJT8a5G3EzjCf', // Christian Hellberg Yanci
+  'user_eQyCcltClyWfoeNXYPPnqqFRpYcxMhPVPl1XPiHwtmy', // Elisa Bracchi
+  'user_H6UeT8TTomvOkwIMdpXHaiozcxcmof7wtyGDmEzgbfF', // Ethan Homola
+  'user_M3jS2hpaKbSQEd97BxtNslJL9xZnuPcHD32HzrlF5IQ', // Giacomo Sabatini
+  'user_9Sio4NjpOzJEMKhi6Fyx4idR03jDWagp5lxztGzXvxa', // Giulia Rubino
+  'user_np1616CiVrB9b8w06AZJSJs54h6c6LR6nI5maGbODQo', // Ingrid Solheim
+  'user_LdCZwEVRkvhC8ME5jXVdWt3DNzleDERHoe5EvyLSpWH', // Jana Fedotova
+  'user_TcPtFXZwP0weUDZ2Z4v8rVSmRwJbyqft3T2aKKGzcI3', // Jan Degen
+  'user_rRaD6EWSRPbGE7xoP25PcJDAwCEAduTOdsm1Q29bBHR', // Jimmy Torp
+  'user_DrAisxcYylsbkv2CXR3zznHWHADfFsAN6oY9MVR3DAV', // Katarina Krajancova
+  'user_OqovICdsJ3Zsi5tgoRRJSSozZIzJcf2zuoP9GlRLexp', // Kristoffer Florencia
+  'user_PAvRWdO7Tp6GEky8VpNr4A7ODDKACZGTmFvtSaSMCKo', // Leonor Belo
+  'user_Swdo2vqt70vQMsS3CmwKfqnmahjMW6v2tUqPcoCdplA', // Lidya Büyük
+  'user_4G0fVtRVsV5S2g6kqvi3eSyUYRcOim4aRWJSDXGcoN7', // Loa Lanner
+  'user_8TKFUi36xI0du7jnv3FzKFxu2wn7w7GhomkKIyeStA5', // Monica Bastos
+  'user_3lYd7jUURC4nQHSqk9zVrYClZwVRJ8FuwNhUi4lDTVN', // Namo Saeed
+  'user_UEqGtxHeOvbPoFGkQJixN0mFctDk7N90VGsGpnWzMWh', // Paulina Doerks
+  'user_fR6YjYyDrzsc8GHdoxCeDToVup4z1AKsUDt8u56EVER', // Sasha Stade
+  'user_fOa94Nj8OcbJfoGKaUkbRvX92Mlof1ucPsA2puMGwtr', // Stefan Ørngreen
+  'user_yCeFDjypSPdwPUprKB5T6Qgx9kw1cByUWcyJTb0rvPM', // Svenja Bendfeldt
+  'user_c8S2utsTKSrDRBAsEdir4QtfUIjUPGHSxFibvhZTQJy', // Sylvester Hindersson
+  'user_gxjRB7KHgEyIx4aMXuaKaPtdUiTY94cFJ2455VvIkLI', // Twinkle Gismondi
+  'user_OrmdbowYEfWZR5SGDUvRobYkVAXoaO1A5pr1coUBgSu', // Victor Rasch Eenberg
+]);
 const CALL_GOAL = 50, EMAIL_GOAL = 20, TEAM_GOAL = 70, ICP_VISITORS = 10000, ICP_PRODUCTS = 100;
 const DEMO_TYPE_IDS = {'actitype_1BurUHmpiiB6TLdhBc0bPO':'Demo Booked','actitype_6Rqakvf9srRBlNhakj1ROi':'Live Demo Booked'};
 const VISITORS_FIELD = {'actitype_1BurUHmpiiB6TLdhBc0bPO':'cf_iwLT7Ojofhvb5eBMIpVsyFjt3IIWUwQzoROmhfbYnh4','actitype_6Rqakvf9srRBlNhakj1ROi':'cf_df8CSXww7ryvUUU3Hst6BPoJvoF9q52gdXJIUgxVPQl'};
