@@ -251,6 +251,7 @@ async function getUserMap() {
   const r = await proxyGet('/user/?_limit=100');
   _userMapCache = {};
   for (const u of r.data || []) {
+    if (!TEAM_USER_IDS.has(u.id)) continue;
     const name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.display_name || 'Unknown';
     _userMapCache[u.id] = name;
   }
@@ -311,7 +312,7 @@ async function loadData() {
   for (const b of bookings) {
     const tid = b.custom_activity_type_id;
     if (!DEMO_TYPE_IDS[tid]) continue;
-    if (!TEAM_USER_IDS.has(b.created_by || b.user_id)) continue;
+    if (!TEAM_USER_IDS.has(b.user_id) && !TEAM_USER_IDS.has(b.created_by)) continue;
     const name = b.created_by_name || b.user_name || 'Unknown';
     const visitors = parseInt(b['custom.' + VISITORS_FIELD[tid]] || b[VISITORS_FIELD[tid]] || 0, 10);
     const products = parseInt(b['custom.' + PRODUCTS_FIELD[tid]] || b[PRODUCTS_FIELD[tid]] || 0, 10);
