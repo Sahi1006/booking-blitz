@@ -212,30 +212,51 @@ async function fetchAllBookings(si, ei) {
   return bookings;
 }
 
+// Cache user map to avoid repeated fetches
+let _userMapCache = null;
+async function getUserMap() {
+  if (_userMapCache) return _userMapCache;
+  const r = await proxyGet('/user/?_limit=100');
+  _userMapCache = {};
+  for (const u of r.data || []) {
+    _userMapCache[u.id] = u.display_name || (u.first_name + ' ' + u.last_name).trim() || 'Unknown';
+  }
+  return _userMapCache;
+}
+
 async function fetchActivity(type, si, ei) {
   // Use Close public reporting API: POST /report/activity/
-  // Metric keys from GET /report/activity/metrics/
+  // Returns weekly totals per user — for daily breakdown we call once per day
   const metricMap = { call: 'calls.outbound.all.count', email: 'emails.sent.all.count' };
   const metric = metricMap[type];
-  const d = await proxyPost('/report/activity/', {
-    type: 'comparison',
-    metrics: [metric],
-    datetime_range: {
-      start: si.slice(0,10),
-      end: ei.slice(0,10)
-    },
-    frequency: 'daily'
-  });
-  const sd = si.slice(0,10), ed = ei.slice(0,10);
+  const userMap = await getUserMap();
   const byDay = {}, byWeek = {};
-  // Comparison report: d.rows = [{user_name, report_values: [{period_start, metric_key: value}]}]
-  for (const row of d.rows || []) {
-    const name = row.user_name || row.display_name || 'Unknown';
-    if (name === 'Unknown') continue;
-    for (const bucket of row.report_values || []) {
-      const date = (bucket.period_start || '').slice(0,10);
-      if (!date || date < sd || date > ed) continue;
-      const val = bucket[metric] || 0;
+
+  // Fetch one day at a time so we get per-day values for penalty checking
+  const start = new Date(si.slice(0,10));
+  const end = new Date(ei.slice(0,10));
+  const today = new Date().toISOString().slice(0,10);
+  const promises = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+    const dateStr = d.toISOString().slice(0,10);
+    if (dateStr > today) break;
+    const nextDay = new Date(d); nextDay.setDate(d.getDate()+1);
+    promises.push(
+      proxyPost('/report/activity/', {
+        type: 'comparison',
+        metrics: [metric],
+        datetime_range: { start: dateStr, end: nextDay.toISOString().slice(0,10) }
+      }).then(resp => ({date: dateStr, resp})).catch(() => ({date: dateStr, resp: null}))
+    );
+  }
+  const results = await Promise.all(promises);
+  for (const {date, resp} of results) {
+    if (!resp) continue;
+    for (const row of resp.data || []) {
+      const name = userMap[row.user_id] || 'Unknown';
+      if (name === 'Unknown') continue;
+      const val = row[metric] || 0;
+      if (val === 0) continue;
       if (!byDay[name]) byDay[name] = {};
       byDay[name][date] = (byDay[name][date] || 0) + val;
       byWeek[name] = (byWeek[name] || 0) + val;
