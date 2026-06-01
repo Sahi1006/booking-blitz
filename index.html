@@ -213,20 +213,33 @@ async function fetchAllBookings(si, ei) {
 }
 
 async function fetchActivity(type, si, ei) {
-  const d = await proxyPost('/report/aggregation/', {
-    include_types: [type],
-    group_by: ['user_id'],
-    aggregations: [{aggregation_type:'count'}],
-    time_buckets: {field:'activity_at', interval:'day'}
+  // Use Close public reporting API: POST /report/activity/
+  // Metric keys from GET /report/activity/metrics/
+  const metricMap = { call: 'calls.outbound.all.count', email: 'emails.sent.all.count' };
+  const metric = metricMap[type];
+  const d = await proxyPost('/report/activity/', {
+    type: 'comparison',
+    metrics: [metric],
+    datetime_range: {
+      start: si.slice(0,10),
+      end: ei.slice(0,10)
+    },
+    frequency: 'daily'
   });
   const sd = si.slice(0,10), ed = ei.slice(0,10);
   const byDay = {}, byWeek = {};
+  // Comparison report: d.rows = [{user_name, report_values: [{period_start, metric_key: value}]}]
   for (const row of d.rows || []) {
-    const [ds, name] = row.groups, date = ds.slice(0,10);
-    if (date < sd || date > ed) continue;
-    if (!byDay[name]) byDay[name] = {};
-    byDay[name][date] = (byDay[name][date] || 0) + row.aggregated_values[0].value;
-    byWeek[name] = (byWeek[name] || 0) + row.aggregated_values[0].value;
+    const name = row.user_name || row.display_name || 'Unknown';
+    if (name === 'Unknown') continue;
+    for (const bucket of row.report_values || []) {
+      const date = (bucket.period_start || '').slice(0,10);
+      if (!date || date < sd || date > ed) continue;
+      const val = bucket[metric] || 0;
+      if (!byDay[name]) byDay[name] = {};
+      byDay[name][date] = (byDay[name][date] || 0) + val;
+      byWeek[name] = (byWeek[name] || 0) + val;
+    }
   }
   return {byDay, byWeek};
 }
