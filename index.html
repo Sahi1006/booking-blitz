@@ -8,12 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-:root {
-  --orange: #FF5C28; --orange-light: #FFF0EB; --orange-dark: #CC3E00;
-  --text: #1A1A1A; --muted: #717171; --border: #E8E8E8;
-  --bg: #FFFFFF; --bg-soft: #FAFAFA;
-  --green: #16a34a; --red: #dc2626; --red-bg: #fef2f2;
-}
+:root { --orange: #FF5C28; --orange-light: #FFF0EB; --orange-dark: #CC3E00; --text: #1A1A1A; --muted: #717171; --border: #E8E8E8; --bg: #FFFFFF; --bg-soft: #FAFAFA; --green: #16a34a; --red: #dc2626; --red-bg: #fef2f2; }
 body { font-family: 'Poppins', sans-serif; background: #0F0F0F; color: var(--text); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 nav { padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; background: rgba(15,15,15,0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.07); position: sticky; top: 0; z-index: 100; }
 .nav-right { display: flex; align-items: center; gap: 12px; }
@@ -37,7 +32,7 @@ nav { padding: 16px 32px; display: flex; align-items: center; justify-content: s
 .goal-bar { height: 100%; border-radius: 50px; background: var(--orange); transition: width 1s ease; }
 .goal-count { font-size: 13px; font-weight: 800; color: #fff; white-space: nowrap; }
 .goal-count span { color: rgba(255,255,255,0.4); font-weight: 400; }
-.winner-banner { background: linear-gradient(135deg, #FF5C28, #CC3E00); color: #fff; text-align: center; padding: 24px 32px; font-family: 'Poppins', sans-serif; }
+.winner-banner { background: linear-gradient(135deg, #FF5C28, #CC3E00); color: #fff; text-align: center; padding: 24px 32px; }
 .winner-banner .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75; margin-bottom: 10px; }
 .winner-banner .main-line { font-size: 24px; font-weight: 900; letter-spacing: -0.02em; margin-bottom: 6px; }
 .winner-banner .sub-line { font-size: 14px; opacity: 0.88; }
@@ -155,35 +150,261 @@ nav { padding: 16px 32px; display: flex; align-items: center; justify-content: s
   </div>
 </div>
 <script>
-const PROXY='https://close-proxy-production.up.railway.app';
-const CALL_GOAL=50,EMAIL_GOAL=20,TEAM_GOAL=70,ICP_VISITORS=10000,ICP_PRODUCTS=100;
-const DEMO_TYPE_IDS={'actitype_1BurUHmpiiB6TLdhBc0bPO':'Demo Booked','actitype_6Rqakvf9srRBlNhakj1ROi':'Live Demo Booked'};
-const VISITORS_FIELD={'actitype_1BurUHmpiiB6TLdhBc0bPO':'cf_iwLT7Ojofhvb5eBMIpVsyFjt3IIWUwQzoROmhfbYnh4','actitype_6Rqakvf9srRBlNhakj1ROi':'cf_df8CSXww7ryvUUU3Hst6BPoJvoF9q52gdXJIUgxVPQl'};
-const PRODUCTS_FIELD={'actitype_1BurUHmpiiB6TLdhBc0bPO':'cf_4gf8INbPdDrO5TDmYCL5WIqczmCMiEJeCUih3BjzwWt','actitype_6Rqakvf9srRBlNhakj1ROi':'cf_IXh411NLxeVBFM9N3mlJIjKuFMJJfwDNKZNerkzP7Wx'};
-function getCompetitionStart(){const now=new Date();const day=now.getDay();const daysFromMon=day===0?6:day-1;const mon=new Date(now);mon.setDate(now.getDate()-daysFromMon);mon.setHours(9,0,0,0);return mon;}
-function getCompetitionEnd(){const end=new Date(getCompetitionStart());end.setDate(end.getDate()+4);end.setHours(15,0,0,0);return end;}
-function competitionIsLive(){const now=new Date();return now>=getCompetitionStart()&&now<=getCompetitionEnd();}
-function competitionIsOver(){return new Date()>getCompetitionEnd();}
-function initials(n){return n.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase();}
-function avatarColor(n){const c=['#FF5C28','#e85d04','#CC3E00','#f48c06','#FF8C5A'];let h=0;for(let ch of n)h=(h*31+ch.charCodeAt(0))&0xffffffff;return c[Math.abs(h)%c.length];}
-function getWeekDays(){const start=getCompetitionStart();const today=new Date().toISOString().slice(0,10);return Array.from({length:5},(_,i)=>{const d=new Date(start);d.setDate(start.getDate()+i);const ds=d.toISOString().slice(0,10);return{date:ds,isToday:ds===today,isPastOrToday:ds<=today};});}
-async function proxyGet(path){const r=await fetch(PROXY+'/api'+path);if(!r.ok)throw new Error('GET '+r.status);return r.json();}
-async function proxyPost(path,body){const r=await fetch(PROXY+'/api'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error('POST '+r.status);return r.json();}
-async function fetchAllBookings(si,ei){const bookings=[],typeIds=Object.keys(DEMO_TYPE_IDS);let cursor=null;do{const p=new URLSearchParams({_limit:100,date_created__gte:si,date_created__lte:ei});typeIds.forEach(id=>p.append('custom_activity_type_id',id));if(cursor)p.set('_cursor',cursor);const d=await proxyGet('/activity/custom/?'+p);bookings.push(...(d.data||[]));cursor=d.cursor||null;}while(cursor);return bookings;}
-async function fetchActivity(type,si,ei){const d=await proxyPost('/report/aggregation/',{include_types:[type],group_by:['user_id'],aggregations:[{aggregation_type:'count'}],time_buckets:{field:'activity_at',interval:'day'}});const sd=si.slice(0,10),ed=ei.slice(0,10);const byDay={},byWeek={};for(const row of d.rows||[]){const[ds,name]=row.groups,date=ds.slice(0,10);if(date<sd||date>ed)continue;if(!byDay[name])byDay[name]={};byDay[name][date]=(byDay[name][date]||0)+row.aggregated_values[0].value;byWeek[name]=(byWeek[name]||0)+row.aggregated_values[0].value;}return{byDay,byWeek};}
-async function loadData(){const si=getCompetitionStart().toISOString(),ei=getCompetitionEnd().toISOString();const today=new Date().toISOString().slice(0,10);const now=new Date();const todayComplete=now.getHours()>=17;const[bookings,calls,emails]=await Promise.all([fetchAllBookings(si,ei),fetchActivity('call',si,ei),fetchActivity('email',si,ei)]);const days=getWeekDays().filter(d=>{if(d.date<today)return true;if(d.date===today)return todayComplete;return false;});const bookingsByUser={};for(const b of bookings){const tid=b.custom_activity_type_id;if(!DEMO_TYPE_IDS[tid])continue;const name=b.created_by_name||b.user_name||'Unknown';const visitors=parseInt(b[VISITORS_FIELD[tid]]||0,10);const products=parseInt(b[PRODUCTS_FIELD[tid]]||0,10);const icp=visitors>=ICP_VISITORS&&products>=ICP_PRODUCTS;if(!bookingsByUser[name])bookingsByUser[name]={icpCount:0,nonIcp:0};if(icp)bookingsByUser[name].icpCount++;else bookingsByUser[name].nonIcp++;}const allNames=new Set([...Object.keys(bookingsByUser),...Object.keys(calls.byWeek),...Object.keys(emails.byWeek)]);const leaderboard=[];for(const name of allNames){if(name==='Unknown')continue;let penalties=0;for(const d of days){const dc=(calls.byDay[name]||{})[d.date]||0;const de=(emails.byDay[name]||{})[d.date]||0;const wasWorking=dc>=3||de>=3;if(wasWorking&&(dc<CALL_GOAL||de<EMAIL_GOAL))penalties++;}const icp=bookingsByUser[name]?.icpCount||0;const nonIcp=bookingsByUser[name]?.nonIcp||0;const c=calls.byWeek[name]||0,e=emails.byWeek[name]||0;if(icp+nonIcp+c+e===0)continue;leaderboard.push({name,icpCount:icp,nonIcp,penalties,netScore:icp-penalties,calls:c,emails:e,activityScore:c+e});}leaderboard.sort((a,b)=>b.netScore-a.netScore||b.activityScore-a.activityScore);const grinder=[...leaderboard].sort((a,b)=>b.activityScore-a.activityScore);return{leaderboard,grinder,days:getWeekDays()};}
-async function loadGrinderOnly(){const si=getCompetitionStart().toISOString(),ei=getCompetitionEnd().toISOString();const[calls,emails]=await Promise.all([fetchActivity('call',si,ei),fetchActivity('email',si,ei)]);const names=new Set([...Object.keys(calls.byWeek),...Object.keys(emails.byWeek)]);const grinder=[];for(const name of names){if(name==='Unknown')continue;const c=calls.byWeek[name]||0,e=emails.byWeek[name]||0;if(c+e===0)continue;grinder.push({name,calls:c,emails:e,activityScore:c+e});}grinder.sort((a,b)=>b.activityScore-a.activityScore);return grinder;}
-function renderDayDots(days){const labels=['Mo','Tu','We','Th','Fr'],today=new Date().toISOString().slice(0,10);document.getElementById('day-dots').innerHTML=days.map((d,i)=>{let cls='future',label='–';if(d.date<today){cls='done';label='✓';}else if(d.date===today){cls='today';label='●';}return`<div class="day-dot"><div class="day-dot-circle ${cls}">${label}</div><div class="day-dot-label">${labels[i]}</div></div>`;}).join('');}
-function renderMeetingBoard(lb){if(!lb.length){document.getElementById('meeting-board').innerHTML=`<div class="not-started"><div class="big">🏁</div><strong>No ICP bookings yet</strong>First qualified meetings will appear here.</div>`;document.getElementById('goal-bar').style.width='0%';document.getElementById('goal-count').innerHTML=`0 <span>/ ${TEAM_GOAL}</span>`;return;}const top=lb.slice(0,15);document.getElementById('meeting-board').innerHTML=top.map((r,i)=>{const rc=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';const m=i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1;const pen=r.penalties>0?`<span class="tag tag-penalty">−${r.penalties}</span>`:'';const nicp=r.nonIcp>0?`<span class="tag tag-icp-fail">⚠️${r.nonIcp} non-ICP</span>`:'';return`<div class="lb-row ${rc}"><div class="lb-rank">${m}</div><div class="lb-avatar" style="background:${avatarColor(r.name)}">${initials(r.name)}</div><div class="lb-info"><div class="lb-name">${r.name} ${pen}${nicp}</div><div class="lb-detail">${r.icpCount} ICP meetings · ${r.calls} calls · ${r.emails} emails</div></div><div class="lb-score"><div class="lb-score-num">${r.netScore}</div><div class="lb-score-label">net score</div></div></div>`;}).join('');const total=lb.reduce((s,r)=>s+Math.max(r.netScore,0),0);document.getElementById('goal-bar').style.width=Math.min(total/TEAM_GOAL*100,100)+'%';document.getElementById('goal-count').innerHTML=`${total} <span>/ ${TEAM_GOAL}</span>`;}
-function renderGrinderBoard(gr){if(!gr.length){document.getElementById('grinder-board').innerHTML=`<div class="not-started"><div class="big">⚡</div><strong>No activity yet</strong>Performance race starts Monday.</div>`;return;}const top=gr.slice(0,15),max=top[0]?.activityScore||1;document.getElementById('grinder-board').innerHTML=top.map((r,i)=>{const rc=i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';const m=i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1;const pct=(r.activityScore/max*100).toFixed(1);return`<div class="lb-row ${rc}"><div class="lb-rank">${m}</div><div class="lb-avatar" style="background:${avatarColor(r.name)}">${initials(r.name)}</div><div class="lb-info"><div class="lb-name">${r.name}</div><div class="grinder-bar-wrap"><div class="grinder-bar-bg"><div class="grinder-bar-fill" style="width:${pct}%"></div></div></div><div class="lb-detail">${r.calls} calls + ${r.emails} emails</div></div><div class="lb-score"><div class="lb-score-num">${r.activityScore}</div><div class="lb-score-label">total</div></div></div>`;}).join('');}
-function showWinnerBanner(lb,gr){if(document.getElementById('winner-banner'))return;const w=lb[0],gw=gr[0];document.getElementById('winner-banner-slot').innerHTML=`<div id="winner-banner" class="winner-banner"><div class="eyebrow">🏁 Competition closed · Friday 3:00 PM</div><div class="main-line">🥇 ${w?.name||'—'} wins the podium with ${w?.netScore??0} ICP meetings!</div><div class="sub-line">🎁 Performance Bonus goes to ${gw?.name||'—'} with ${gw?.activityScore??0} activities — mystery gift reveal now!</div></div>`;}
-function updateWeekLabel(){const start=getCompetitionStart(),end=getCompetitionEnd();const fmt=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});if(competitionIsOver())document.getElementById('week-label').textContent=`Competition ended ${fmt(end)} at 3:00 PM`;else if(!competitionIsLive())document.getElementById('week-label').textContent=`Starts ${fmt(start)} at 9:00 AM`;else document.getElementById('week-label').textContent=`${fmt(start)} – ${fmt(end)} · Ends Friday 3PM`;}
-let meetingCd=60,mainT,grinderT;
-function syncLabel(){document.getElementById('last-sync').textContent='Last sync '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
-async function fullRefresh(){updateWeekLabel();if(!competitionIsLive()&&!competitionIsOver()){const msg=`<div class="not-started"><div class="big">🚀</div><strong>Competition hasn't started yet</strong>Leaderboard goes live Monday at 9:00 AM.</div>`;document.getElementById('meeting-board').innerHTML=msg;document.getElementById('grinder-board').innerHTML=msg;renderDayDots(getWeekDays());document.getElementById('goal-count').innerHTML=`0 <span>/ ${TEAM_GOAL}</span>`;return;}try{const{leaderboard,grinder,days}=await loadData();renderMeetingBoard(leaderboard);renderGrinderBoard(grinder);renderDayDots(days);syncLabel();document.getElementById('error-container').innerHTML='';if(competitionIsOver())showWinnerBanner(leaderboard,grinder);}catch(e){console.error(e);document.getElementById('error-container').innerHTML=`<div class="error-note">⚠️ Could not load data: ${e.message}</div>`;}meetingCd=60;}
-async function grinderRefresh(){if(!competitionIsLive()&&!competitionIsOver())return;try{const gr=await loadGrinderOnly();renderGrinderBoard(gr);syncLabel();}catch(e){}}
-function startTimers(){clearInterval(mainT);clearInterval(grinderT);mainT=setInterval(()=>{meetingCd--;document.getElementById('refresh-timer').textContent=`Meetings in ${meetingCd}s · Grinder live ⚡`;if(meetingCd<=0)fullRefresh();},1000);grinderT=setInterval(grinderRefresh,5000);}
-updateWeekLabel();renderDayDots(getWeekDays());fullRefresh();startTimers();
+const PROXY = 'https://close-proxy-production.up.railway.app';
+const CALL_GOAL = 50, EMAIL_GOAL = 20, TEAM_GOAL = 70, ICP_VISITORS = 10000, ICP_PRODUCTS = 100;
+const DEMO_TYPE_IDS = {'actitype_1BurUHmpiiB6TLdhBc0bPO':'Demo Booked','actitype_6Rqakvf9srRBlNhakj1ROi':'Live Demo Booked'};
+const VISITORS_FIELD = {'actitype_1BurUHmpiiB6TLdhBc0bPO':'cf_iwLT7Ojofhvb5eBMIpVsyFjt3IIWUwQzoROmhfbYnh4','actitype_6Rqakvf9srRBlNhakj1ROi':'cf_df8CSXww7ryvUUU3Hst6BPoJvoF9q52gdXJIUgxVPQl'};
+const PRODUCTS_FIELD = {'actitype_1BurUHmpiiB6TLdhBc0bPO':'cf_4gf8INbPdDrO5TDmYCL5WIqczmCMiEJeCUih3BjzwWt','actitype_6Rqakvf9srRBlNhakj1ROi':'cf_IXh411NLxeVBFM9N3mlJIjKuFMJJfwDNKZNerkzP7Wx'};
+
+function getCompetitionStart() {
+  const now = new Date(), day = now.getDay();
+  const mon = new Date(now);
+  mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+  mon.setHours(9, 0, 0, 0);
+  return mon;
+}
+function getCompetitionEnd() {
+  const end = new Date(getCompetitionStart());
+  end.setDate(end.getDate() + 4);
+  end.setHours(15, 0, 0, 0);
+  return end;
+}
+function competitionIsLive() { const now = new Date(); return now >= getCompetitionStart() && now <= getCompetitionEnd(); }
+function competitionIsOver() { return new Date() > getCompetitionEnd(); }
+function initials(n) { return n.split(' ').slice(0,2).map(p=>p[0]).join('').toUpperCase(); }
+function avatarColor(n) { const c=['#FF5C28','#e85d04','#CC3E00','#f48c06','#FF8C5A']; let h=0; for(let ch of n) h=(h*31+ch.charCodeAt(0))&0xffffffff; return c[Math.abs(h)%c.length]; }
+function getWeekDays() {
+  const start = getCompetitionStart(), today = new Date().toISOString().slice(0,10);
+  return Array.from({length:5}, (_,i) => {
+    const d = new Date(start); d.setDate(start.getDate()+i);
+    const ds = d.toISOString().slice(0,10);
+    return {date:ds, isToday:ds===today, isPastOrToday:ds<=today};
+  });
+}
+
+async function proxyGet(path) {
+  const r = await fetch(PROXY + '/api/v1' + path);
+  if (!r.ok) throw new Error('GET ' + r.status);
+  return r.json();
+}
+async function proxyPost(path, body) {
+  const r = await fetch(PROXY + '/api/v1' + path, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) throw new Error('POST ' + r.status);
+  return r.json();
+}
+
+async function fetchAllBookings(si, ei) {
+  const bookings = [], typeIds = Object.keys(DEMO_TYPE_IDS);
+  let cursor = null;
+  do {
+    const p = new URLSearchParams({_limit:100, date_created__gte:si, date_created__lte:ei});
+    typeIds.forEach(id => p.append('custom_activity_type_id', id));
+    if (cursor) p.set('_cursor', cursor);
+    const d = await proxyGet('/activity/custom/?' + p);
+    bookings.push(...(d.data || []));
+    cursor = d.cursor || null;
+  } while (cursor);
+  return bookings;
+}
+
+async function fetchActivity(type, si, ei) {
+  const d = await proxyPost('/report/aggregation/', {
+    include_types: [type],
+    group_by: ['user_id'],
+    aggregations: [{aggregation_type:'count'}],
+    time_buckets: {field:'activity_at', interval:'day'}
+  });
+  const sd = si.slice(0,10), ed = ei.slice(0,10);
+  const byDay = {}, byWeek = {};
+  for (const row of d.rows || []) {
+    const [ds, name] = row.groups, date = ds.slice(0,10);
+    if (date < sd || date > ed) continue;
+    if (!byDay[name]) byDay[name] = {};
+    byDay[name][date] = (byDay[name][date] || 0) + row.aggregated_values[0].value;
+    byWeek[name] = (byWeek[name] || 0) + row.aggregated_values[0].value;
+  }
+  return {byDay, byWeek};
+}
+
+async function loadData() {
+  const si = getCompetitionStart().toISOString(), ei = getCompetitionEnd().toISOString();
+  const today = new Date().toISOString().slice(0,10);
+  const todayComplete = new Date().getHours() >= 17;
+  const [bookings, calls, emails] = await Promise.all([
+    fetchAllBookings(si, ei),
+    fetchActivity('call', si, ei),
+    fetchActivity('email', si, ei)
+  ]);
+  const days = getWeekDays().filter(d => {
+    if (d.date < today) return true;
+    if (d.date === today) return todayComplete;
+    return false;
+  });
+  const bookingsByUser = {};
+  for (const b of bookings) {
+    const tid = b.custom_activity_type_id;
+    if (!DEMO_TYPE_IDS[tid]) continue;
+    const name = b.created_by_name || b.user_name || 'Unknown';
+    const visitors = parseInt(b[VISITORS_FIELD[tid]] || 0, 10);
+    const products = parseInt(b[PRODUCTS_FIELD[tid]] || 0, 10);
+    const icp = visitors >= ICP_VISITORS && products >= ICP_PRODUCTS;
+    if (!bookingsByUser[name]) bookingsByUser[name] = {icpCount:0, nonIcp:0};
+    if (icp) bookingsByUser[name].icpCount++;
+    else bookingsByUser[name].nonIcp++;
+  }
+  const allNames = new Set([...Object.keys(bookingsByUser), ...Object.keys(calls.byWeek), ...Object.keys(emails.byWeek)]);
+  const leaderboard = [];
+  for (const name of allNames) {
+    if (name === 'Unknown') continue;
+    let penalties = 0;
+    for (const d of days) {
+      const dc = (calls.byDay[name] || {})[d.date] || 0;
+      const de = (emails.byDay[name] || {})[d.date] || 0;
+      const wasWorking = dc >= 3 || de >= 3;
+      if (wasWorking && (dc < CALL_GOAL || de < EMAIL_GOAL)) penalties++;
+    }
+    const icp = bookingsByUser[name]?.icpCount || 0;
+    const nonIcp = bookingsByUser[name]?.nonIcp || 0;
+    const c = calls.byWeek[name] || 0, e = emails.byWeek[name] || 0;
+    if (icp + nonIcp + c + e === 0) continue;
+    leaderboard.push({name, icpCount:icp, nonIcp, penalties, netScore:icp-penalties, calls:c, emails:e, activityScore:c+e});
+  }
+  leaderboard.sort((a,b) => b.netScore - a.netScore || b.activityScore - a.activityScore);
+  const grinder = [...leaderboard].sort((a,b) => b.activityScore - a.activityScore);
+  return {leaderboard, grinder, days: getWeekDays()};
+}
+
+async function loadGrinderOnly() {
+  const si = getCompetitionStart().toISOString(), ei = getCompetitionEnd().toISOString();
+  const [calls, emails] = await Promise.all([fetchActivity('call',si,ei), fetchActivity('email',si,ei)]);
+  const names = new Set([...Object.keys(calls.byWeek), ...Object.keys(emails.byWeek)]);
+  const grinder = [];
+  for (const name of names) {
+    if (name === 'Unknown') continue;
+    const c = calls.byWeek[name] || 0, e = emails.byWeek[name] || 0;
+    if (c + e === 0) continue;
+    grinder.push({name, calls:c, emails:e, activityScore:c+e});
+  }
+  grinder.sort((a,b) => b.activityScore - a.activityScore);
+  return grinder;
+}
+
+function renderDayDots(days) {
+  const labels = ['Mo','Tu','We','Th','Fr'], today = new Date().toISOString().slice(0,10);
+  document.getElementById('day-dots').innerHTML = days.map((d,i) => {
+    let cls = 'future', label = '–';
+    if (d.date < today) { cls = 'done'; label = '✓'; }
+    else if (d.date === today) { cls = 'today'; label = '●'; }
+    return `<div class="day-dot"><div class="day-dot-circle ${cls}">${label}</div><div class="day-dot-label">${labels[i]}</div></div>`;
+  }).join('');
+}
+
+function renderMeetingBoard(lb) {
+  if (!lb.length) {
+    document.getElementById('meeting-board').innerHTML = `<div class="not-started"><div class="big">🏁</div><strong>No ICP bookings yet</strong>First qualified meetings will appear here.</div>`;
+    document.getElementById('goal-bar').style.width = '0%';
+    document.getElementById('goal-count').innerHTML = `0 <span>/ ${TEAM_GOAL}</span>`;
+    return;
+  }
+  const top = lb.slice(0,15);
+  document.getElementById('meeting-board').innerHTML = top.map((r,i) => {
+    const rc = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+    const m = i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1;
+    const pen = r.penalties > 0 ? `<span class="tag tag-penalty">−${r.penalties}</span>` : '';
+    const nicp = r.nonIcp > 0 ? `<span class="tag tag-icp-fail">⚠️${r.nonIcp} non-ICP</span>` : '';
+    return `<div class="lb-row ${rc}"><div class="lb-rank">${m}</div><div class="lb-avatar" style="background:${avatarColor(r.name)}">${initials(r.name)}</div><div class="lb-info"><div class="lb-name">${r.name} ${pen}${nicp}</div><div class="lb-detail">${r.icpCount} ICP meetings · ${r.calls} calls · ${r.emails} emails</div></div><div class="lb-score"><div class="lb-score-num">${r.netScore}</div><div class="lb-score-label">net score</div></div></div>`;
+  }).join('');
+  const total = lb.reduce((s,r) => s + Math.max(r.netScore,0), 0);
+  document.getElementById('goal-bar').style.width = Math.min(total/TEAM_GOAL*100,100) + '%';
+  document.getElementById('goal-count').innerHTML = `${total} <span>/ ${TEAM_GOAL}</span>`;
+}
+
+function renderGrinderBoard(gr) {
+  if (!gr.length) {
+    document.getElementById('grinder-board').innerHTML = `<div class="not-started"><div class="big">⚡</div><strong>No activity yet</strong>Performance race starts Monday.</div>`;
+    return;
+  }
+  const top = gr.slice(0,15), max = top[0]?.activityScore || 1;
+  document.getElementById('grinder-board').innerHTML = top.map((r,i) => {
+    const rc = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
+    const m = i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1;
+    const pct = (r.activityScore/max*100).toFixed(1);
+    return `<div class="lb-row ${rc}"><div class="lb-rank">${m}</div><div class="lb-avatar" style="background:${avatarColor(r.name)}">${initials(r.name)}</div><div class="lb-info"><div class="lb-name">${r.name}</div><div class="grinder-bar-wrap"><div class="grinder-bar-bg"><div class="grinder-bar-fill" style="width:${pct}%"></div></div></div><div class="lb-detail">${r.calls} calls + ${r.emails} emails</div></div><div class="lb-score"><div class="lb-score-num">${r.activityScore}</div><div class="lb-score-label">total</div></div></div>`;
+  }).join('');
+}
+
+function showWinnerBanner(lb, gr) {
+  if (document.getElementById('winner-banner')) return;
+  const w = lb[0], gw = gr[0];
+  document.getElementById('winner-banner-slot').innerHTML = `<div id="winner-banner" class="winner-banner"><div class="eyebrow">🏁 Competition closed · Friday 3:00 PM</div><div class="main-line">🥇 ${w?.name||'—'} wins the podium with ${w?.netScore??0} ICP meetings!</div><div class="sub-line">🎁 Performance Bonus goes to ${gw?.name||'—'} with ${gw?.activityScore??0} activities — mystery gift reveal now!</div></div>`;
+}
+
+function updateWeekLabel() {
+  const start = getCompetitionStart(), end = getCompetitionEnd();
+  const fmt = d => d.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+  if (competitionIsOver()) document.getElementById('week-label').textContent = `Competition ended ${fmt(end)} at 3:00 PM`;
+  else if (!competitionIsLive()) document.getElementById('week-label').textContent = `Starts ${fmt(start)} at 9:00 AM`;
+  else document.getElementById('week-label').textContent = `${fmt(start)} – ${fmt(end)} · Ends Friday 3PM`;
+}
+
+let meetingCd = 60, mainT, grinderT;
+
+function syncLabel() {
+  document.getElementById('last-sync').textContent = 'Last sync ' + new Date().toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+
+async function fullRefresh() {
+  updateWeekLabel();
+  if (!competitionIsLive() && !competitionIsOver()) {
+    const msg = `<div class="not-started"><div class="big">🚀</div><strong>Competition hasn't started yet</strong>Leaderboard goes live Monday at 9:00 AM.</div>`;
+    document.getElementById('meeting-board').innerHTML = msg;
+    document.getElementById('grinder-board').innerHTML = msg;
+    renderDayDots(getWeekDays());
+    document.getElementById('goal-count').innerHTML = `0 <span>/ ${TEAM_GOAL}</span>`;
+    return;
+  }
+  try {
+    const {leaderboard, grinder, days} = await loadData();
+    renderMeetingBoard(leaderboard);
+    renderGrinderBoard(grinder);
+    renderDayDots(days);
+    syncLabel();
+    document.getElementById('error-container').innerHTML = '';
+    if (competitionIsOver()) showWinnerBanner(leaderboard, grinder);
+  } catch(e) {
+    console.error(e);
+    document.getElementById('error-container').innerHTML = `<div class="error-note">⚠️ Could not load data: ${e.message}</div>`;
+  }
+  meetingCd = 60;
+}
+
+async function grinderRefresh() {
+  if (!competitionIsLive() && !competitionIsOver()) return;
+  try {
+    const gr = await loadGrinderOnly();
+    renderGrinderBoard(gr);
+    syncLabel();
+  } catch(e) {}
+}
+
+function startTimers() {
+  clearInterval(mainT); clearInterval(grinderT);
+  mainT = setInterval(() => {
+    meetingCd--;
+    document.getElementById('refresh-timer').textContent = `Meetings in ${meetingCd}s · Grinder live ⚡`;
+    if (meetingCd <= 0) fullRefresh();
+  }, 1000);
+  grinderT = setInterval(grinderRefresh, 5000);
+}
+
+updateWeekLabel();
+renderDayDots(getWeekDays());
+fullRefresh();
+startTimers();
 </script>
 </body>
 </html>
