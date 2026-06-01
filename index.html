@@ -219,48 +219,43 @@ async function getUserMap() {
   const r = await proxyGet('/user/?_limit=100');
   _userMapCache = {};
   for (const u of r.data || []) {
-    _userMapCache[u.id] = u.display_name || (u.first_name + ' ' + u.last_name).trim() || 'Unknown';
+    const name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.display_name || 'Unknown';
+    _userMapCache[u.id] = name;
   }
   return _userMapCache;
 }
 
 async function fetchActivity(type, si, ei) {
-  // Use Close public reporting API: POST /report/activity/
-  // Returns weekly totals per user — for daily breakdown we call once per day
+  // Use Close public reporting API: POST /report/activity/ (comparison = per user)
+  // Call once per working day so we can check penalties per day
   const metricMap = { call: 'calls.outbound.all.count', email: 'emails.sent.all.count' };
   const metric = metricMap[type];
   const userMap = await getUserMap();
   const byDay = {}, byWeek = {};
 
-  // Fetch one day at a time so we get per-day values for penalty checking
   const start = new Date(si.slice(0,10));
-  const end = new Date(ei.slice(0,10));
   const today = new Date().toISOString().slice(0,10);
-  const promises = [];
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+  // Fetch each day sequentially (not parallel) to avoid rate limits
+  for (let d = new Date(start); ; d.setDate(d.getDate()+1)) {
     const dateStr = d.toISOString().slice(0,10);
-    if (dateStr > today) break;
-    const nextDay = new Date(d); nextDay.setDate(d.getDate()+1);
-    promises.push(
-      proxyPost('/report/activity/', {
+    if (dateStr > today || dateStr > ei.slice(0,10)) break;
+    const nextDay = new Date(d); nextDay.setDate(nextDay.getDate()+1);
+    try {
+      const resp = await proxyPost('/report/activity/', {
         type: 'comparison',
         metrics: [metric],
         datetime_range: { start: dateStr, end: nextDay.toISOString().slice(0,10) }
-      }).then(resp => ({date: dateStr, resp})).catch(() => ({date: dateStr, resp: null}))
-    );
-  }
-  const results = await Promise.all(promises);
-  for (const {date, resp} of results) {
-    if (!resp) continue;
-    for (const row of resp.data || []) {
-      const name = userMap[row.user_id] || 'Unknown';
-      if (name === 'Unknown') continue;
-      const val = row[metric] || 0;
-      if (val === 0) continue;
-      if (!byDay[name]) byDay[name] = {};
-      byDay[name][date] = (byDay[name][date] || 0) + val;
-      byWeek[name] = (byWeek[name] || 0) + val;
-    }
+      });
+      for (const row of resp.data || []) {
+        const name = userMap[row.user_id] || 'Unknown';
+        if (name === 'Unknown') continue;
+        const val = row[metric] || 0;
+        if (val === 0) continue;
+        if (!byDay[name]) byDay[name] = {};
+        byDay[name][dateStr] = (byDay[name][dateStr] || 0) + val;
+        byWeek[name] = (byWeek[name] || 0) + val;
+      }
+    } catch(e) { /* skip failed days */ }
   }
   return {byDay, byWeek};
 }
