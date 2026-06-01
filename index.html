@@ -201,10 +201,11 @@ async function fetchAllBookings(si, ei) {
   const bookings = [], typeIds = Object.keys(DEMO_TYPE_IDS);
   let cursor = null;
   do {
-    const p = new URLSearchParams({_limit:100, date_created__gte:si, date_created__lte:ei});
-    typeIds.forEach(id => p.append('custom_activity_type_id', id));
-    if (cursor) p.set('_cursor', cursor);
-    const d = await proxyGet('/activity/custom/?' + p);
+    // Build query string manually to avoid encoding colons in ISO dates
+    let qs = `_limit=100&date_created__gte=${si}&date_created__lte=${ei}`;
+    typeIds.forEach(id => qs += `&custom_activity_type_id=${id}`);
+    if (cursor) qs += `&_cursor=${cursor}`;
+    const d = await proxyGet('/activity/custom/?' + qs);
     bookings.push(...(d.data || []));
     cursor = d.cursor || null;
   } while (cursor);
