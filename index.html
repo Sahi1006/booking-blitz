@@ -341,7 +341,7 @@ async function fetchActivity(type, si, ei) {
 async function loadData() {
   const si = getCompetitionStart().toISOString(), ei = getCompetitionEnd().toISOString();
   const today = new Date().toISOString().slice(0,10);
-  const todayComplete = new Date().getHours() >= 17;
+  const now2 = new Date(); const todayComplete = now2.getHours() > 17 || (now2.getHours() === 17 && now2.getMinutes() >= 2);
   const [bookings, calls, emails] = await Promise.all([
     fetchAllBookings(si, ei),
     fetchActivity('call', si, ei),
