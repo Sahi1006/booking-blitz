@@ -436,7 +436,7 @@ function renderMeetingBoard(lb) {
     document.getElementById('goal-count').innerHTML = `0 <span>/ ${TEAM_GOAL}</span>`;
     return;
   }
-  const top = lb.slice(0,15);
+  const top = lb.slice(0,28);
   document.getElementById('meeting-board').innerHTML = top.map((r,i) => {
     const rc = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
     const m = i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1;
@@ -454,7 +454,7 @@ function renderGrinderBoard(gr) {
     document.getElementById('grinder-board').innerHTML = `<div class="not-started"><div class="big">⚡</div><strong>No activity yet</strong>Performance race starts Monday.</div>`;
     return;
   }
-  const top = gr.slice(0,15), max = top[0]?.activityScore || 1;
+  const top = gr.slice(0,28), max = top[0]?.activityScore || 1;
   document.getElementById('grinder-board').innerHTML = top.map((r,i) => {
     const rc = i===0?'rank-1':i===1?'rank-2':i===2?'rank-3':'';
     const m = i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1;
