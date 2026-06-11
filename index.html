@@ -232,16 +232,22 @@ async function fetchAllBookings(si,ei){
 async function fetchActivity(type,si,ei){
   const metric=type==='call'?'calls.outbound.all.count':'emails.sent.all.count';
   const umap=await getUserMap();
-  const d=await proxyPost('/report/activity/',{
-    type:'comparison',metrics:[metric],
-    datetime_range:{start:si.slice(0,10),end:new Date(new Date(ei).getTime()+86400000).toISOString().slice(0,10)}
+  // Use /report/aggregation/ — the only POST endpoint the proxy supports
+  const d=await proxyPost('/report/aggregation/',{
+    include_types:[type==='call'?'call':'email'],
+    group_by:['user_id'],
+    aggregations:[{aggregation_type:'count'}],
+    time_buckets:{field:'activity_at',interval:'day'}
   });
+  const sd=si.slice(0,10), ed=ei.slice(0,10);
   const byUser={};
-  for(const row of d.data||[]){
-    if(!TEAM_USER_IDS.has(row.user_id))continue;
-    const name=umap[row.user_id]||'Unknown';
+  for(const row of d.rows||[]){
+    const date=row.groups[0].slice(0,10), uid=row.groups[1];
+    if(date<sd||date>ed)continue;
+    if(!TEAM_USER_IDS.has(uid))continue;
+    const name=umap[uid]||'Unknown';
     if(name==='Unknown')continue;
-    byUser[name]=(byUser[name]||0)+(row[metric]||0);
+    byUser[name]=(byUser[name]||0)+row.aggregated_values[0].value;
   }
   return byUser;
 }
